@@ -2,6 +2,7 @@ import page from "../client/dashboard.html";
 import modelsPage from "../client/models.html";
 import { ControlError, FlmServer, parseStartOptions } from "./flm.ts";
 import { CatalogError } from "./model-catalog.ts";
+import { PiConfigSync } from "./pi-config.ts";
 
 async function readJson(request: Request): Promise<unknown> {
   if (!request.headers.get("Content-Type")?.startsWith("application/json")) throw new ControlError("Expected JSON.", 400);
@@ -10,7 +11,7 @@ async function readJson(request: Request): Promise<unknown> {
   try { return JSON.parse(body); } catch { throw new ControlError("Invalid JSON.", 400); }
 }
 
-export function startDashboard(flm: FlmServer, port = 9098) {
+export function startDashboard(flm: FlmServer, port = 9098, piConfig = new PiConfigSync(flm)) {
   let closing = false;
   const server = Bun.serve({
     hostname: "127.0.0.1", port, maxRequestBodySize: 4096, idleTimeout: 30, development: false,
@@ -32,6 +33,14 @@ export function startDashboard(flm: FlmServer, port = 9098) {
         if (request.method === "GET" && path === "/api/catalog") return json({ models: await flm.catalog.list(), modelPath: flm.modelPath });
         if (request.method === "GET" && path === "/api/model-context") return json(await flm.catalog.context(url.searchParams.get("model") ?? ""));
         if (request.method === "GET" && path === "/api/download") return json(flm.downloads.snapshot());
+        if (request.method === "GET" && path === "/api/pi-config") return json(await piConfig.preview());
+        if (request.method === "POST" && path === "/api/pi-config") {
+          const body = await readJson(request);
+          if (typeof body !== "object" || body === null || !("token" in body) || typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token)) {
+            throw new ControlError("Preview the Pi config sync before confirming it.", 400);
+          }
+          return json(await piConfig.sync(body.token));
+        }
         if (request.method === "POST" && path === "/api/pull") {
           const body = await readJson(request);
           if (typeof body !== "object" || body === null || !("model" in body) || typeof body.model !== "string") throw new CatalogError("Choose a catalog model.", 400);

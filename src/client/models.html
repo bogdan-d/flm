@@ -18,11 +18,14 @@
       <h2>Choose a model</h2>
       <span id="count" role="status">Loading catalog…</span>
       <button id="refresh" type="button">Refresh catalog</button>
+      <button id="sync-pi" type="button">Sync models to Pi</button>
     </div>
     <p class="note">All models exposed by this installed FLM build for this hardware. Capabilities are catalog claims, not local test results.</p>
     <p class="note">Download estimates sum packaged file sizes, not RAM requirements or bytes still missing. Default context is not maximum context.</p>
     <p class="note">Use Details or “Inspect contexts” to read small model configs from Hugging Face. Config ceilings do not guarantee FLM runtime support or memory capacity.</p>
     <p id="storage" class="note"></p>
+    <p class="note">Sync models to Pi writes only downloaded conversational models, regardless of table filters. It replaces only the FLM provider and backs up your existing config.</p>
+    <p id="pi-status" class="note" role="status"></p>
     <p id="error" role="alert" hidden></p>
     <div class="catalog-workspace">
       <div class="catalog-list">

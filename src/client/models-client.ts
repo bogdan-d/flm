@@ -1,5 +1,6 @@
 import type { CatalogModel, ContextDetails } from "../server/model-catalog.ts";
 import type { DownloadState } from "../server/downloads.ts";
+import type { PiConfigPreview, PiConfigResult } from "../server/pi-config.ts";
 
 function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
   const result = document.getElementById(id);
@@ -12,6 +13,8 @@ const installed = element("installed", HTMLSelectElement);
 const capability = element("capability", HTMLSelectElement);
 const error = element("error", HTMLParagraphElement);
 const refresh = element("refresh", HTMLButtonElement);
+const syncPi = element("sync-pi", HTMLButtonElement);
+const piStatus = element("pi-status", HTMLParagraphElement);
 const inspect = element("inspect", HTMLButtonElement);
 const cancel = element("cancel", HTMLButtonElement);
 const logs = element("download-logs", HTMLPreElement);
@@ -192,6 +195,20 @@ element("close-details", HTMLButtonElement).addEventListener("click", closeDetai
 document.addEventListener("keydown", event => { if (event.key === "Escape" && selected) closeDetails(); });
 for (const input of [search, installed, capability]) input.addEventListener("input", renderRows);
 refresh.addEventListener("click", () => { void loadCatalog(); });
+syncPi.addEventListener("click", async () => {
+  syncPi.disabled = true; piStatus.textContent = "Reading downloaded models and Pi config…"; showError("");
+  try {
+    const preview = await request<PiConfigPreview>("/api/pi-config");
+    piStatus.textContent = "";
+    if (!confirm(`Sync ${preview.models.length} downloaded conversational models to Pi?\n\nTarget: ${preview.path}\n\n${preview.models.join("\n")}\n\nReplace providers.flm only. Other providers stay unchanged.\nThe existing config will be backed up.\nContexts use conservative model defaults, capped by the managed server override and known fixed limits.`)) return;
+    piStatus.textContent = "Syncing Pi config…";
+    const result = await request<PiConfigResult>("/api/pi-config", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: preview.token }),
+    });
+    piStatus.textContent = `Synced ${result.models.length} models to ${result.path}. ${result.backupPath ? `Backup: ${result.backupPath}. ` : ""}Open /model in Pi to reload. Capabilities come from the FLM catalog; Pi tool calling and vision are not verified for every model.`;
+  } catch (cause) { piStatus.textContent = ""; showError(cause instanceof Error ? cause.message : String(cause)); }
+  finally { syncPi.disabled = false; }
+});
 inspect.addEventListener("click", async () => {
   inspect.disabled = true;
   const remaining = filtered().slice();

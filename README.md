@@ -50,7 +50,19 @@ Closing the browser tab does not cancel a pull. Exiting the Bun dashboard cancel
 
 Verified on 2026-10-17: the native catalog exposed 44 models with complete packaged file totals. Context inspection returned config ceilings or documented fixed limits for 43, and Unknown for Whisper, whose speech decoder does not expose the same language-context fields. Browser checks covered filters, context inspection, mobile layout, and downloading the previously missing `qwen3:0.6b` model. FLM completed and verified all four files, the page changed its status to Installed, and it appeared in the server preload selector. That approximately 695 MB download was retained. Cancellation, failure, concurrent-pull rejection, and shutdown cleanup were tested with controlled child processes; a real interrupted network download/resume was not exercised.
 
-## Pi configuration example
+## Sync downloaded models to Pi
+
+On the **Models** page, click **Sync models to Pi**. Confirm the target path and model list. The sync includes only downloaded conversational models, regardless of table filters, and excludes standalone speech and embedding models. It does not download models or start inference.
+
+The target is `~/.pi/agent/models.json`, or `models.json` under `PI_CODING_AGENT_DIR` when that environment variable is set for the dashboard process. Sync replaces only `providers.flm`, including any custom settings in that provider. Other providers and top-level settings are preserved. Existing files get a uniquely named, private `.bak` copy beside them before an atomic replacement. The success message shows the backup path. To undo a sync, restore that backup while no other application is editing the config.
+
+Invalid JSON, invalid config structure, and symlink targets are refused without overwriting the config. If the file, downloaded model list, or relevant server settings change after confirmation, review the sync again. If no conversational models are downloaded, the existing FLM provider is left untouched. Avoid editing the config or syncing from another dashboard process during a sync.
+
+Generated entries use catalog vision and reasoning metadata. Thinking toggles are sent only for models that advertise toggle support. Context lengths conservatively use the smaller of each model's default and the managed server's context override, with documented fixed Flash limits applied. Each response gets up to one quarter of that allowance, capped at 32,768 tokens. Larger runtime contexts require manual configuration. The provider points to this dashboard's FLM API port; syncing does not validate an external server's context settings or every model's Pi tool-calling and vision behavior.
+
+Open **`/model` in Pi** after syncing to reload the config and select an FLM model. Sync again after downloading models or changing the managed context allowance.
+
+### Manual configuration example
 
 Start the native FLM server:
 
