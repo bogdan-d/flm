@@ -1,10 +1,10 @@
 # flm
 
-A small Bun dashboard for the native FastFlowLM NPU server. No Python, containers, frontend framework, or additional runtime packages.
+A small Bun dashboard for the native FastFlowLM NPU server, with a React 19 and Tailwind CSS 4 client. No Python, containers, or separate frontend server.
 
 ## Dashboard
 
-Requires Bun and the native `flm` executable on `PATH`. Run from this repository:
+Requires Bun and the native `flm` executable on `PATH`. Install dependencies once with `bun install`, then run from this repository:
 
 ```bash
 bun run start
@@ -84,13 +84,16 @@ Pi's `/thinking off` sends `think: false`; other available thinking levels send 
 src/
   index.ts           # Entry point and shutdown handling
   server/            # HTTP routes, FLM lifecycle, catalog, and downloads
-  client/            # Browser scripts, HTML pages, and styles
+  client/            # React pages, HTML entry points, and Tailwind styles
+    components/      # Shared navigation, logs, and model details
 tests/
   fixtures/          # Controlled child processes for lifecycle tests
 examples/            # Pi provider configuration
 ```
 
-Bun bundles the HTML entry points in `src/client/` when the server imports them. Browser code uses type-only imports from the server modules for API shapes; server implementation code is not bundled into the browser.
+Bun bundles the HTML entry points in `src/client/` when the server imports them. Each page mounts its own React root; navigation uses ordinary links, without a client router. `bunfig.toml` enables `bun-plugin-tailwind`, and `src/client/dashboard.css` defines the theme and common control styles. No separate build step is required.
+
+Browser code uses type-only imports from the server modules for API shapes; server implementation code is not bundled into the browser. Page requests are aborted on unmount. Polling waits for each response before scheduling another, pauses while the page is hidden, and ignores responses superseded by a control action.
 
 To install dependencies:
 
@@ -117,3 +120,5 @@ To type check:
 ```bash
 bun check
 ```
+
+The React migration was checked in Chromium at desktop and 390px mobile widths with a controlled FLM child and mocked download and Pi-sync responses. Checks covered start/stop, search and status filters, context inspection, details focus and Escape handling, log follow, download cancellation, and Pi confirmation. These checks did not run native inference, download model weights, or write the user's Pi config.

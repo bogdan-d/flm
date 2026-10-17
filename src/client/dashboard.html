@@ -6,48 +6,9 @@
   <title>FLM dashboard</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./dashboard.css">
-  <script type="module" src="./dashboard-client.ts"></script>
+  <script type="module" src="./dashboard.tsx"></script>
 </head>
 <body>
-  <header>
-    <h1>FastFlowLM <span>NPU server</span></h1>
-    <nav aria-label="Dashboard"><a href="/" aria-current="page">Server</a><a href="/models">Models</a></nav>
-    <span id="status" class="status" role="status">Connecting</span>
-    <a id="endpoint" href="http://127.0.0.1:52625/v1/models" target="_blank" rel="noreferrer">127.0.0.1:52625/v1</a>
-  </header>
-  <main>
-    <form id="controls">
-      <label class="preload">Preload model
-        <select id="model" disabled><option value="">No preload · load on first API request</option></select>
-      </label>
-      <label>Context per model
-        <select id="context">
-          <option value="">Model default</option>
-          <option value="4096">4K</option><option value="8192">8K</option>
-          <option value="16384">16K</option><option value="32768">32K</option>
-          <option value="65536">64K</option><option value="131072">128K</option>
-          <option value="262144" selected>256K</option>
-        </select>
-      </label>
-      <button id="refresh" type="button">Refresh models</button>
-      <button id="start" type="submit" class="primary" disabled>Start server</button>
-      <button id="stop" type="button" disabled>Stop</button>
-    </form>
-    <p class="note">Balanced power · loopback only · original image resolution. Preload is not a model lock; API requests can switch models.</p>
-    <p class="note">Context applies to every model loaded by this server. Choose “Model default” for models with different limits.</p>
-    <p class="note">Known FLM 1.0.9 issue: preloading can leave the API unresponsive. Use “No preload” and let the first API request load the model.</p>
-    <p id="storage" class="note"></p>
-    <p id="error" role="alert" hidden></p>
-    <section class="console" aria-labelledby="logs-title">
-      <div class="console-head">
-        <h2 id="logs-title">Server logs</h2>
-        <span id="process">No managed process</span>
-        <label><input id="follow" type="checkbox" checked> Follow</label>
-      </div>
-      <p id="command" hidden></p>
-      <pre id="logs" tabindex="0" aria-label="FLM server output">Start the server to see its output here.</pre>
-    </section>
-    <footer>Only downloaded language models are offered for preload. Closing this tab leaves FLM running; exiting the Bun dashboard stops it.</footer>
-  </main>
+  <div id="root"></div>
 </body>
 </html>

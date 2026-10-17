@@ -6,64 +6,9 @@
   <title>FLM models</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./dashboard.css">
-  <script type="module" src="./models-client.ts"></script>
+  <script type="module" src="./models.tsx"></script>
 </head>
-<body class="catalog-page">
-  <header>
-    <h1>FastFlowLM <span>Model catalog</span></h1>
-    <nav aria-label="Dashboard"><a href="/">Server</a><a href="/models" aria-current="page">Models</a></nav>
-  </header>
-  <main>
-    <div class="catalog-heading">
-      <h2>Choose a model</h2>
-      <span id="count" role="status">Loading catalog…</span>
-      <button id="refresh" type="button">Refresh catalog</button>
-      <button id="sync-pi" type="button">Sync models to Pi</button>
-    </div>
-    <p class="note">All models exposed by this installed FLM build for this hardware. Capabilities are catalog claims, not local test results.</p>
-    <p class="note">Download estimates sum packaged file sizes, not RAM requirements or bytes still missing. Default context is not maximum context.</p>
-    <p class="note">Use Details or “Inspect contexts” to read small model configs from Hugging Face. Config ceilings do not guarantee FLM runtime support or memory capacity.</p>
-    <p id="storage" class="note"></p>
-    <p class="note">Sync models to Pi writes only downloaded conversational models, regardless of table filters. It replaces only the FLM provider and backs up your existing config.</p>
-    <p id="pi-status" class="note" role="status"></p>
-    <p id="error" role="alert" hidden></p>
-    <div class="catalog-workspace">
-      <div class="catalog-list">
-        <div class="catalog-filters">
-          <label class="preload">Search models<input id="search" type="search" placeholder="Name, family, capability, quantization…"></label>
-          <label>Local status<select id="installed"><option value="all">All models</option><option value="installed">Installed</option><option value="missing">Not installed</option></select></label>
-          <label>Capability<select id="capability"><option value="all">Any capability</option><option value="vision">Vision</option><option value="reasoning">Reasoning</option><option value="tool-calling">Tool calling</option><option value="audio">Audio input</option><option value="embeddings">Embeddings</option><option value="transcription">Transcription</option><option value="translation">Translation</option><option value="single-turn">Single turn</option></select></label>
-          <button id="inspect" type="button">Inspect contexts</button>
-        </div>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="FLM model catalog">
-          <table>
-            <thead><tr><th scope="col">Model</th><th scope="col">Capabilities</th><th scope="col">Download estimate</th><th scope="col">Default context</th><th scope="col">Context ceiling</th><th scope="col">Local status</th><th scope="col">Actions</th></tr></thead>
-            <tbody id="models"></tbody>
-          </table>
-        </div>
-        <p id="empty" class="note" hidden>No models match these filters.</p>
-        <footer>Downloads run as a separate <code>flm pull &lt;tag&gt;</code> process and never start inference. One managed download at a time. <a href="https://fastflowlm.com/docs/models/" target="_blank" rel="noreferrer">Official model cards</a></footer>
-      </div>
-      <aside id="details" class="model-details" aria-labelledby="details-title" hidden>
-        <div class="details-head">
-          <h2 id="details-title" tabindex="-1"></h2>
-          <button id="close-details" type="button" aria-label="Close model details">Close</button>
-        </div>
-        <dl id="details-fields"></dl>
-        <p id="context-note" class="note"></p>
-        <p id="detail-links"></p>
-      </aside>
-    </div>
-  </main>
-  <section id="download" class="console" aria-labelledby="download-title" hidden>
-    <div class="console-head">
-      <h2 id="download-title">Download</h2>
-      <span id="download-status" role="status"></span>
-      <button id="cancel" type="button">Cancel download</button>
-      <label><input id="follow" type="checkbox" checked> Follow</label>
-    </div>
-    <pre id="download-logs" tabindex="0" aria-label="Download progress"></pre>
-    <p class="note download-note">Percentages are for the current file transfer, not the whole model. Cancellation retains completed files and partial downloads; retry without --force to resume.</p>
-  </section>
+<body>
+  <div id="root"></div>
 </body>
 </html>
