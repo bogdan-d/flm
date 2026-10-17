@@ -1,4 +1,4 @@
-import type { DashboardState, InstalledModel, Phase } from "./flm.ts";
+import type { DashboardState, InstalledModel, Phase } from "../server/flm.ts";
 
 function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
   const result = document.getElementById(id);

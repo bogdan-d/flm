@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
-import { FlmServer } from "../flm.ts";
-import { startDashboard } from "../dashboard.ts";
+import { FlmServer } from "../src/server/flm.ts";
+import { startDashboard } from "../src/server/dashboard.ts";
 
 const controllers: FlmServer[] = [];
 afterEach(async () => {

@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
-import { FlmServer, portIsOccupied } from "../flm.ts";
-import { startDashboard } from "../dashboard.ts";
+import { FlmServer, portIsOccupied } from "../src/server/flm.ts";
+import { startDashboard } from "../src/server/dashboard.ts";
 
 const dashboards: ReturnType<typeof startDashboard>[] = [];
 const controllers: FlmServer[] = [];

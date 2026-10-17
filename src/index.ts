@@ -1,5 +1,5 @@
-import { startDashboard } from "./dashboard.ts";
-import { FlmServer } from "./flm.ts";
+import { startDashboard } from "./server/dashboard.ts";
+import { FlmServer } from "./server/flm.ts";
 
 const port = Number(process.env.DASHBOARD_PORT ?? 9098);
 if (!Number.isInteger(port) || port < 1 || port > 65535 || port === 52625) {

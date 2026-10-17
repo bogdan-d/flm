@@ -1,5 +1,5 @@
-import type { CatalogModel, ContextDetails } from "./model-catalog.ts";
-import type { DownloadState } from "./downloads.ts";
+import type { CatalogModel, ContextDetails } from "../server/model-catalog.ts";
+import type { DownloadState } from "../server/downloads.ts";
 
 function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
   const result = document.getElementById(id);

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { contextDetails, parseCatalog } from "../model-catalog.ts";
+import { contextDetails, parseCatalog } from "../src/server/model-catalog.ts";
 
 // Relevant fields captured from FLM 1.0.9 catalogs. Tests exercise our interpretation.
 const qwen = { model: "qwen3.6-moe:35b-a3b", installed: false, default_context_length: 32768,

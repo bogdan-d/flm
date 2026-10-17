@@ -1,5 +1,5 @@
-import page from "./dashboard.html";
-import modelsPage from "./models.html";
+import page from "../client/dashboard.html";
+import modelsPage from "../client/models.html";
 import { ControlError, FlmServer, parseStartOptions } from "./flm.ts";
 import { CatalogError } from "./model-catalog.ts";
 

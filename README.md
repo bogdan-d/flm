@@ -58,13 +58,27 @@ Start the native FLM server:
 flm serve qwen3.6-moe:35b-a3b --host 127.0.0.1 --port 52625 --pmode balanced --ctx-len 262144 --img-pre-resize 0 --cors 0
 ```
 
-Merge `providers.flm` from [pi-models.example.json](pi-models.example.json) into `~/.pi/agent/models.json`, preserving existing providers. Open `/model` in Pi to reload the file and select FLM. The API key is a placeholder; the server does not require authentication.
+Merge `providers.flm` from [examples/pi-models.example.json](examples/pi-models.example.json) into `~/.pi/agent/models.json`, preserving existing providers. Open `/model` in Pi to reload the file and select FLM. The API key is a placeholder; the server does not require authentication.
 
 The example enables text and image input with a 262,144-token context and a chosen 32,768-token per-response output allowance. Prompt, images, tool history, reasoning, and output share the total context. FLM loads the vision weights automatically; `--img-pre-resize 0` disables its image resizing, while Pi's own attachment limits still apply.
 
 Pi's `/thinking off` sends `think: false`; other available thinking levels send `think: true`. FLM uses an on/off toggle, not distinct effort budgets. Pi's Chat Completions integration handles streaming and tool calls without an additional model-config switch. This example has not been tested end to end for Pi vision, thinking, and tool calling.
 
 ## Development
+
+### Project layout
+
+```text
+src/
+  index.ts           # Entry point and shutdown handling
+  server/            # HTTP routes, FLM lifecycle, catalog, and downloads
+  client/            # Browser scripts, HTML pages, and styles
+tests/
+  fixtures/          # Controlled child processes for lifecycle tests
+examples/            # Pi provider configuration
+```
+
+Bun bundles the HTML entry points in `src/client/` when the server imports them. Browser code uses type-only imports from the server modules for API shapes; server implementation code is not bundled into the browser.
 
 To install dependencies:
 
@@ -75,7 +89,7 @@ bun install
 To run:
 
 ```bash
-bun run index.ts
+bun run start
 ```
 
 To test lifecycle ownership, stop escalation, input validation, and browser-origin protections:
