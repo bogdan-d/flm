@@ -16,6 +16,7 @@ const inspect = element("inspect", HTMLButtonElement);
 const cancel = element("cancel", HTMLButtonElement);
 const logs = element("download-logs", HTMLPreElement);
 const follow = element("follow", HTMLInputElement);
+let detailsOpener: HTMLButtonElement | null = null;
 let models: CatalogModel[] = [];
 let modelPath = "";
 let selected: CatalogModel | null = null;
@@ -61,9 +62,12 @@ function contextCell(model: CatalogModel) {
     pending.has(model.tag) ? "Inspecting…" : contextErrors.has(model.tag) ? "Unavailable · retry Details" : "Not inspected";
 }
 function details() {
+  element("details", HTMLElement).hidden = !selected;
+  for (const button of rows.querySelectorAll<HTMLButtonElement>("button[aria-controls='details']")) {
+    button.setAttribute("aria-expanded", String(button === detailsOpener && selected !== null));
+  }
   if (!selected) return;
   const model = selected;
-  element("details", HTMLElement).hidden = false;
   element("details-title", HTMLHeadingElement).textContent = model.tag;
   const fields = element("details-fields", HTMLDListElement);
   const context = contexts.get(model.tag);
@@ -132,7 +136,14 @@ function renderRows() {
     const status = row.insertCell(); status.textContent = model.installed ? "Installed" : "Not installed"; status.className = model.installed ? "installed" : "";
     const actions = row.insertCell(); actions.className = "row-actions";
     const detail = document.createElement("button"); detail.textContent = "Details";
-    detail.addEventListener("click", () => { selected = model; details(); void inspectContext(model); element("details", HTMLElement).scrollIntoView({ block: "nearest" }); });
+    detail.setAttribute("aria-controls", "details");
+    detail.setAttribute("aria-expanded", String(selected?.tag === model.tag));
+    detail.setAttribute("aria-label", `Details for ${model.tag}`);
+    if (selected?.tag === model.tag) detailsOpener = detail;
+    detail.addEventListener("click", () => {
+      selected = model; detailsOpener = detail; details(); void inspectContext(model);
+      element("details-title", HTMLHeadingElement).focus({ preventScroll: true });
+    });
     const pull = document.createElement("button"); pull.textContent = model.installed ? "Installed" : "Download"; pull.setAttribute("aria-label", `${pull.textContent} ${model.tag}`);
     pull.addEventListener("click", () => { void downloadModel(model); });
     actions.append(detail, pull); downloadButtons.set(model.tag, pull);
@@ -172,6 +183,13 @@ cancel.addEventListener("click", async () => {
   catch (cause) { showError(String(cause)); }
   finally { acting = false; updateActions(); }
 });
+function closeDetails() {
+  selected = null; details();
+  (detailsOpener?.isConnected ? detailsOpener : search).focus({ preventScroll: true });
+  detailsOpener = null;
+}
+element("close-details", HTMLButtonElement).addEventListener("click", closeDetails);
+document.addEventListener("keydown", event => { if (event.key === "Escape" && selected) closeDetails(); });
 for (const input of [search, installed, capability]) input.addEventListener("input", renderRows);
 refresh.addEventListener("click", () => { void loadCatalog(); });
 inspect.addEventListener("click", async () => {
