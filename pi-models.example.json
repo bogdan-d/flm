@@ -1,0 +1,40 @@
+{
+  "$schema": "https://pi.dev/schemas/models.schema.json",
+  "providers": {
+    "flm": {
+      "baseUrl": "http://127.0.0.1:52625/v1",
+      "api": "openai-completions",
+      "apiKey": "flm",
+      "compat": {
+        "supportsStore": false,
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "qwen3.6-moe:35b-a3b",
+          "name": "Qwen3.6 35B-A3B · FLM NPU",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 262144,
+          "maxTokens": 32768,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          },
+          "samplingParams": {
+            "think": true
+          },
+          "samplingParamsByThinkingLevel": {
+            "off": {
+              "think": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}

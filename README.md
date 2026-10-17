@@ -1,5 +1,71 @@
 # flm
 
+A small Bun dashboard for the native FastFlowLM NPU server. No Python, containers, frontend framework, or additional runtime packages.
+
+## Dashboard
+
+Requires Bun and the native `flm` executable on `PATH`. Run from this repository:
+
+```bash
+bun run start
+```
+
+Open **http://127.0.0.1:9098**. Choose a downloaded model to preload, or leave **No preload** selected to load the model named by the first API request. Choose the context allowance and click **Start server**. Logs refresh every second, with an optional auto-follow view. **Stop** terminates only the FLM process started by this dashboard.
+
+The default settings match the Pi example: 256K context, balanced NPU power, original image resolution, CORS disabled, and the API at `http://127.0.0.1:52625/v1`. The context override applies to every model subsequently loaded, so use **Model default** for models with different limits. Match Pi's `contextWindow` to the actual server allowance. Preloading does not lock the server to that model; API requests can switch models.
+
+The preload selector shows installed conversational models. Use **Refresh models** after a download. The model storage root is inherited from `FLM_MODEL_PATH`, falling back to `~/models/flm`. FLM stores weights under its `models/` subdirectory. Native-audio conversational models remain eligible for preload; standalone Whisper and embedding models are separate types.
+
+**Known FLM 1.0.9 issue:** preloading Qwen3.6 35B has left the API unresponsive with a `remote_endpoint` I/O-thread error on this host. Use **No preload** and let the first API request load the model. Smaller-model preload checks passed, but do not establish that this startup path is reliable. This catalog extension does not fix that issue.
+
+Closing the browser tab leaves the managed server running. **Ctrl+C in the Bun terminal stops both the dashboard and its managed FLM process**, escalating to SIGKILL after 10 seconds if necessary. An API port already used by another process is shown as external; the dashboard refuses to start another server and never stops that process. Logs are volatile, capped at 131,072 characters, and reset on each start. They can include inference prompts; do not publish them unredacted. Ready means `/v1/models` answered after startup, not continuous health monitoring or validated inference. Once ready, the dashboard watches process exit rather than filling FLM's logs with health requests.
+
+Both listeners are loopback-only. Controls check Host, Origin, and browser fetch-site headers, borrowing the security approach and compact log/control layout from the sibling `strix-halo-inference` dashboard. There is no authentication against other local processes or users. Do not expose or tunnel this control interface to an untrusted network. Metrics collection and container controls from that reference are deliberately not included.
+
+To choose a different dashboard port:
+
+```bash
+env DASHBOARD_PORT=9097 bun run start
+```
+
+## Model catalog and downloads
+
+Open **Models** in the navigation, or visit **http://127.0.0.1:9098/models**. The table includes every model exposed by `flm list --json` for the installed build and hardware, not preview models for other NPU generations. Search by tag, parameter size, quantization, or capability, and filter by installed status or advertised capability. Details show model type, backend, minimum FLM version, thinking-toggle metadata, source links, and the exact `flm pull` command.
+
+Download estimates sum only the required files in FLM's packaged `model_info.json`, read from `FLM_MODELINFO_PATH` or `/usr/share/flm/model_info.json`. Missing file-size entries produce **Unknown**, not a misleading partial total. These are full-model estimates from a package snapshot, not current upstream quotes, remaining transfer bytes, parameter counts, or RAM requirements. Capabilities come from catalog flags and labels and are not a promise that every API/client workflow has been tested.
+
+### Context information
+
+The table always shows FLM's **default context**, which is not necessarily its maximum. Click **Details** for one model or **Inspect contexts** for the currently filtered list to inspect context ceilings. Inspections run at most three at a time in that page and are cached by the dashboard process. They fetch small `config.json` files from the model's catalog-listed Hugging Face repository; no weights are downloaded. Network failures remain visible and can be retried with Details.
+
+For ordinary models, the ceiling is the language configuration's `max_position_embeddings` or equivalent, preferring `text_config` and never a vision encoder's context. It is labeled **config**, not a verified FLM runtime maximum or RAM guarantee. Unknown ceilings stay unknown. Four documented Flash tags have a separate fixed 1,024-token runtime cap even when their shared base configuration advertises more. See the [official model cards](https://fastflowlm.com/docs/models/) before choosing large contexts. Requests, images, history, reasoning, and output share the context allowance.
+
+### Download, cancel, and resume
+
+Click **Download** on a missing model and confirm its tag, estimated size, and destination. The dashboard launches `flm pull <tag>` with an argument array, not a shell. Only tags from the current FLM catalog are accepted. One managed pull runs at a time, separately from inference; the catalog refreshes when it finishes. Inspect the combined stdout/stderr log for current-file progress, final verification, or errors. FLM's percentage is for the current file transfer, not overall model completion; its progress output labels MiB as MB.
+
+**Cancel download** terminates only the owned pull process. FLM 1.0.9 writes partial transfers to `.part` files and verifies size/hash before promoting completed files. Completed files and partial downloads are retained. Click Download again to resume with an ordinary pull; the dashboard never adds `--force` or deletes files. Resume depends on upstream range support. Avoid starting another pull of the same model outside the dashboard while one is active. The dashboard does not coordinate with other FLM processes downloading through the inference API or a terminal.
+
+Closing the browser tab does not cancel a pull. Exiting the Bun dashboard cancels its managed pull and stops its managed inference server, with bounded SIGKILL escalation. Logs and job status are in-memory and reset when the dashboard restarts; model files remain on disk. There are deliberately no model-delete controls or automatic downloads on opening the catalog.
+
+Verified on 2026-10-17: the native catalog exposed 44 models with complete packaged file totals. Context inspection returned config ceilings or documented fixed limits for 43, and Unknown for Whisper, whose speech decoder does not expose the same language-context fields. Browser checks covered filters, context inspection, mobile layout, and downloading the previously missing `qwen3:0.6b` model. FLM completed and verified all four files, the page changed its status to Installed, and it appeared in the server preload selector. That approximately 695 MB download was retained. Cancellation, failure, concurrent-pull rejection, and shutdown cleanup were tested with controlled child processes; a real interrupted network download/resume was not exercised.
+
+## Pi configuration example
+
+Start the native FLM server:
+
+```bash
+flm serve qwen3.6-moe:35b-a3b --host 127.0.0.1 --port 52625 --pmode balanced --ctx-len 262144 --img-pre-resize 0 --cors 0
+```
+
+Merge `providers.flm` from [pi-models.example.json](pi-models.example.json) into `~/.pi/agent/models.json`, preserving existing providers. Open `/model` in Pi to reload the file and select FLM. The API key is a placeholder; the server does not require authentication.
+
+The example enables text and image input with a 262,144-token context and a chosen 32,768-token per-response output allowance. Prompt, images, tool history, reasoning, and output share the total context. FLM loads the vision weights automatically; `--img-pre-resize 0` disables its image resizing, while Pi's own attachment limits still apply.
+
+Pi's `/thinking off` sends `think: false`; other available thinking levels send `think: true`. FLM uses an on/off toggle, not distinct effort budgets. Pi's Chat Completions integration handles streaming and tool calls without an additional model-config switch. This example has not been tested end to end for Pi vision, thinking, and tool calling.
+
+## Development
+
 To install dependencies:
 
 ```bash
@@ -12,10 +78,16 @@ To run:
 bun run index.ts
 ```
 
+To test lifecycle ownership, stop escalation, input validation, and browser-origin protections:
+
+```bash
+bun test
+```
+
+The tests use a controlled child process to verify dashboard behavior, not to claim FLM API compatibility. On 2026-10-17, a separate browser check started native FLM 1.0.9 with a Qwen3.5 9B preload at 4K context, observed logs and Ready status, received `42` from a real completion, and stopped the server through the UI. Starting without a preload and loading the model on the first real completion were also verified, as was Ctrl+C cleanup of a running child. This does not validate Pi vision or tool calling, or full-context inference.
+
 To type check:
 
 ```bash
 bun check
 ```
-
-This project was created using `bun init` in bun v1.4.3. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
