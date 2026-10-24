@@ -80,7 +80,6 @@ function Dashboard() {
       </form>
       <p className="note">Balanced power · loopback only · original image resolution. Preload is not a model lock; API requests can switch models.</p>
       <p className="note">Context applies to every model loaded by this server. Choose "Model default" for models with different limits.</p>
-      <p className="note">Known FLM 1.0.9–1.0.10 issue: preloading can leave the API unresponsive. Use "No preload" and let the first API request load the model.</p>
       <p className="note">{state && `Model storage: ${state.modelPath}`}</p>
       {error && <p role="alert">{error}</p>}
       <LogPanel title="Server logs" output={state?.logs || "Start the server to see its output here."} command={state?.command} status={running ? `PID ${state.pid} · ${state.preload ? `preload ${state.preload}` : "no preload"}` : "No managed process"} />

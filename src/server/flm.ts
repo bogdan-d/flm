@@ -53,6 +53,7 @@ export class FlmServer {
   private readonly env: NodeJS.ProcessEnv;
   private readonly stopTimeout: number;
   private child: Bun.Subprocess<"ignore", "pipe", "pipe"> | null = null;
+  private probing: Bun.Subprocess | null = null;
   private finished: Promise<void> = Promise.resolve();
   private busy = false;
   private closing = false;
@@ -82,18 +83,25 @@ export class FlmServer {
       .map(model => ({ tag: model.tag, contextLength: model.defaultContext, vision: model.capabilities.includes("vision") }));
   }
 
+  // FLM listens while it is still loading a preload. Never abort a probe: a reset connection
+  // in its accept queue stops it accepting any more (ROCm/FastFlowLM#762). Child exit ends it.
+  private probe(child: Bun.Subprocess) {
+    if (this.probing === child) return;
+    this.probing = child;
+    fetch(`http://127.0.0.1:${this.port}/v1/models`, { timeout: false })
+      .then(async response => {
+        await response.text();
+        if (response.ok && this.child === child && this.phase === "starting") this.phase = "ready";
+      })
+      .catch(() => { /* A live process is starting until its API answers. */ })
+      .finally(() => { if (this.probing === child) this.probing = null; });
+  }
+
   async state(): Promise<DashboardState> {
     const child = this.child;
     let phase = this.phase;
     if (child && phase === "starting") {
-      let ready = false;
-      try {
-        const response = await fetch(`http://127.0.0.1:${this.port}/v1/models`, { signal: AbortSignal.timeout(2000) });
-        ready = response.ok;
-        await response.text();
-      } catch { /* A live process is starting until its API answers. */ }
-      if (this.child !== child || this.phase !== "starting") return this.state();
-      this.phase = phase = ready ? "ready" : "starting";
+      this.probe(child);
     } else if (!child && !this.busy && portIsOccupied(this.port)) {
       phase = "external";
     }

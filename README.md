@@ -16,7 +16,7 @@ The default settings match the Pi example: 256K context, balanced NPU power, ori
 
 The preload selector shows installed conversational models. Use **Refresh models** after a download. The model storage root is inherited from `FLM_MODEL_PATH`, falling back to `~/models/flm`. FLM stores weights under its `models/` subdirectory. Native-audio conversational models remain eligible for preload; standalone Whisper and embedding models are separate types.
 
-**Known FLM 1.0.9–1.0.10 issue:** preloading Qwen3.6 35B has left the API unresponsive with a `remote_endpoint` I/O-thread error on this host. Use **No preload** and let the first API request load the model. Smaller-model preload checks passed, but do not establish that this startup path is reliable. This catalog extension does not fix that issue.
+**FLM 1.0.9–1.0.10 startup caveat:** FLM opens the API port before a preload finishes loading. If a client gives up on a connection during that time, the server stops accepting connections after the load ([ROCm/FastFlowLM#762](https://github.com/ROCm/FastFlowLM/issues/762)). The dashboard's readiness check never gives up on a connection, so preloading works. Avoid time-limited health checks from other tools while a model loads.
 
 Closing the browser tab leaves the managed server running. **Ctrl+C in the Bun terminal stops both the dashboard and its managed FLM process**, escalating to SIGKILL after 10 seconds if necessary. An API port already used by another process is shown as external; the dashboard refuses to start another server and never stops that process. Logs are volatile, capped at 131,072 characters, and reset on each start. They can include inference prompts; do not publish them unredacted. Ready means `/v1/models` answered after startup, not continuous health monitoring or validated inference. Once ready, the dashboard watches process exit rather than filling FLM's logs with health requests.
 
@@ -113,7 +113,7 @@ To test lifecycle ownership, stop escalation, input validation, and browser-orig
 bun test
 ```
 
-The tests use a controlled child process to verify dashboard behavior, not to claim FLM API compatibility. On 2026-10-17, a separate browser check started native FLM 1.0.9 with a Qwen3.5 9B preload at 4K context, observed logs and Ready status, received `42` from a real completion, and stopped the server through the UI. Starting without a preload and loading the model on the first real completion were also verified, as was Ctrl+C cleanup of a running child. This does not validate Pi vision or tool calling, or full-context inference.
+The tests use a controlled child process to verify dashboard behavior, not to claim FLM API compatibility. On 2026-10-17, a separate browser check started native FLM 1.0.9 with a Qwen3.5 9B preload at 4K context, observed logs and Ready status, received `42` from a real completion, and stopped the server through the UI. Starting without a preload and loading the model on the first real completion were also verified, as was Ctrl+C cleanup of a running child. On 2026-10-24, FLM 1.0.10 with a Qwen3.6 35B preload at 256K context reached Ready after about 9 seconds without I/O-thread errors and answered a real completion. This does not validate Pi vision or tool calling, or full-context inference.
 
 To type check:
 
