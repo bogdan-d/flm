@@ -32,7 +32,7 @@ export function parseStartOptions(value: unknown): StartOptions {
 }
 
 export function portIsOccupied(port: number): boolean {
-  // Do not connect and immediately disconnect: FLM 1.0.9 can lose an I/O thread that way.
+  // Do not connect and immediately disconnect: FLM 1.0.9–1.0.10 can lose an I/O thread that way.
   try {
     const listener = Bun.listen({ hostname: "127.0.0.1", port, socket: { data() {} } });
     listener.stop(true);
